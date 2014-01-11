@@ -34,12 +34,11 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldInterviewersService.AddAsync"/>
         /// </summary>
-        public Task<Interviewer> AddAsync(Interviewer interviewer)
+        public async Task<Interviewer> AddAsync(Interviewer interviewer)
         {
-            return Client.PostAsJsonAsync(InterviewersApi.AbsoluteUri, interviewer)
-                         .ContinueWith(task => task.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(task => JsonConvert.DeserializeObjectAsync<Interviewer>(task.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage = await Client.PostAsJsonAsync(InterviewersApi.AbsoluteUri, interviewer);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<Interviewer>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
@@ -52,15 +51,13 @@ namespace Nfield.Services.Implementation
                 throw new ArgumentNullException("interviewer");
             }
 
-            return
-                Client.DeleteAsync(InterviewersApi + interviewer.InterviewerId)
-                      .FlattenExceptions();
+            return Client.DeleteAsync(InterviewersApi + interviewer.InterviewerId).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldInterviewersService.UpdateAsync"/>
         /// </summary>
-        public Task<Interviewer> UpdateAsync(Interviewer interviewer)
+        public async Task<Interviewer> UpdateAsync(Interviewer interviewer)
         {
             if (interviewer == null)
             {
@@ -75,44 +72,37 @@ namespace Nfield.Services.Implementation
                     TelephoneNumber = interviewer.TelephoneNumber
                 };
 
-            return Client.PatchAsJsonAsync(InterviewersApi + interviewer.InterviewerId, updatedInterviewer)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask => JsonConvert.DeserializeObjectAsync<Interviewer>(stringTask.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage = await Client.PatchAsJsonAsync(InterviewersApi + interviewer.InterviewerId, updatedInterviewer);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<Interviewer>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldInterviewersService.QueryAsync"/>
         /// </summary>
-        public Task<IQueryable<Interviewer>> QueryAsync()
+        public async Task<IQueryable<Interviewer>> QueryAsync()
         {
-            return Client.GetAsync(InterviewersApi.AbsoluteUri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<List<Interviewer>>(stringTask.Result).AsQueryable())
-                         .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(InterviewersApi.AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var interviewersList =
+                await JsonConvert.DeserializeObjectAsync<List<Interviewer>>(responseAsString).FlattenExceptions();
+            return interviewersList.AsQueryable();
         }
 
         /// <summary>
         /// See <see cref="INfieldInterviewersService.ChangePasswordAsync"/>
         /// </summary>
-        public Task<Interviewer> ChangePasswordAsync(Interviewer interviewer, string password)
+        public async Task<Interviewer> ChangePasswordAsync(Interviewer interviewer, string password)
         {
             if (interviewer == null)
             {
                 throw new ArgumentNullException("interviewer");
             }
 
-            return Client.PutAsJsonAsync(InterviewersApi + interviewer.InterviewerId, (object)new { Password = password })
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask => JsonConvert.DeserializeObjectAsync<Interviewer>(stringTask.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage =
+                await Client.PutAsJsonAsync(InterviewersApi + interviewer.InterviewerId, (object) new {Password = password});
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<Interviewer>(responseAsString).FlattenExceptions();            
         }
 
         #endregion
