@@ -44,14 +44,14 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldInterviewersService.RemoveAsync"/>
         /// </summary>
-        public Task RemoveAsync(Interviewer interviewer)
+        public async Task RemoveAsync(Interviewer interviewer)
         {
             if (interviewer == null)
             {
                 throw new ArgumentNullException("interviewer");
             }
 
-            return Client.DeleteAsync(InterviewersApi + interviewer.InterviewerId).FlattenExceptions();
+            await Client.DeleteAsync(InterviewersApi + interviewer.InterviewerId).FlattenExceptions();
         }
 
         /// <summary>

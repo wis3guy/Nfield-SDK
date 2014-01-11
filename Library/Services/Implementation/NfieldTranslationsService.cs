@@ -32,23 +32,21 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldTranslationsService.QueryAsync"/>
         /// </summary>
-        public Task<IQueryable<Translation>> QueryAsync(string surveyId, int languageId)
+        public async Task<IQueryable<Translation>> QueryAsync(string surveyId, int languageId)
         {
             CheckSurveyId(surveyId);
 
-            return Client.GetAsync(TranslationsApi(surveyId, languageId, null).AbsoluteUri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<List<Translation>>(stringTask.Result).AsQueryable())
-                         .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(TranslationsApi(surveyId, languageId, null).AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var translationsList =
+                await JsonConvert.DeserializeObjectAsync<List<Translation>>(responseAsString).FlattenExceptions();
+            return translationsList.AsQueryable();
         }
 
         /// <summary>
         /// See <see cref="INfieldTranslationsService.AddAsync"/>
         /// </summary>
-        public Task<Translation> AddAsync(string surveyId, int languageId, Translation translation)
+        public async Task<Translation> AddAsync(string surveyId, int languageId, Translation translation)
         {
             CheckSurveyId(surveyId);
 
@@ -57,16 +55,16 @@ namespace Nfield.Services.Implementation
                 throw new ArgumentNullException("translation");
             }
 
-            return Client.PostAsJsonAsync(TranslationsApi(surveyId, languageId, null).AbsoluteUri, translation)
-                         .ContinueWith(task => task.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(task => JsonConvert.DeserializeObjectAsync<Translation>(task.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage =
+                await Client.PostAsJsonAsync(TranslationsApi(surveyId, languageId, null).AbsoluteUri, translation);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<Translation>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldTranslationsService.RemoveAsync"/>
         /// </summary>
-        public Task RemoveAsync(string surveyId, int languageId, Translation translation)
+        public async Task RemoveAsync(string surveyId, int languageId, Translation translation)
         {
             CheckSurveyId(surveyId);
 
@@ -75,15 +73,15 @@ namespace Nfield.Services.Implementation
                 throw new ArgumentNullException("translation");
             }
 
-            return
+            await
                 Client.DeleteAsync(TranslationsApi(surveyId, languageId, translation.Name).AbsoluteUri)
-                      .FlattenExceptions();
+                    .FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldTranslationsService.UpdateAsync"/>
         /// </summary>
-        public Task UpdateAsync(string surveyId, int languageId, Translation translation)
+        public async Task UpdateAsync(string surveyId, int languageId, Translation translation)
         {
             CheckSurveyId(surveyId);
 
@@ -92,8 +90,9 @@ namespace Nfield.Services.Implementation
                 throw new ArgumentNullException("translation");
             }
 
-            return Client.PutAsJsonAsync(TranslationsApi(surveyId, languageId, null).AbsoluteUri,
-                translation).FlattenExceptions();
+            await
+                Client.PutAsJsonAsync(TranslationsApi(surveyId, languageId, null).AbsoluteUri, translation)
+                    .FlattenExceptions();
         }
 
 

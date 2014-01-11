@@ -34,15 +34,13 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldBackgroundTasksService.QueryAsync"/>
         /// </summary>
-        public Task<IQueryable<BackgroundTask>> QueryAsync()
+        public async Task<IQueryable<BackgroundTask>> QueryAsync()
         {
-            return Client.GetAsync(BackgroundTasksApi.AbsoluteUri)
-             .ContinueWith(
-                 responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-             .ContinueWith(
-                 stringTask =>
-                 JsonConvert.DeserializeObject<List<BackgroundTask>>(stringTask.Result).AsQueryable())
-             .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(BackgroundTasksApi.AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var backgorundTasksList =
+                await JsonConvert.DeserializeObjectAsync<List<BackgroundTask>>(responseAsString).FlattenExceptions();
+            return backgorundTasksList.AsQueryable();
         }
         
         #endregion

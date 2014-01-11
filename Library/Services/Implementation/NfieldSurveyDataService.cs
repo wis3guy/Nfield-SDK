@@ -18,12 +18,11 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldSurveyDataService.PostAsync"/>
         /// </summary>
-        public Task<BackgroundTask> PostAsync(SurveyDownloadDataRequest surveyDownloadDataRequest)
+        public async Task<BackgroundTask> PostAsync(SurveyDownloadDataRequest surveyDownloadDataRequest)
         {
-            return Client.PostAsJsonAsync(SurveyDataApi.AbsoluteUri, surveyDownloadDataRequest)
-                         .ContinueWith(task => task.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(task => JsonConvert.DeserializeObjectAsync<BackgroundTask>(task.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage = await Client.PostAsJsonAsync(SurveyDataApi.AbsoluteUri, surveyDownloadDataRequest);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<BackgroundTask>(responseAsString).FlattenExceptions();
         }
 
         #region Implementation of INfieldConnectionClientObject

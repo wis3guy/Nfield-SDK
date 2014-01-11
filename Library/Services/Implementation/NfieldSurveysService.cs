@@ -37,52 +37,47 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldSurveysService.QueryAsync"/>
         /// </summary>
-        public Task<IQueryable<Survey>> QueryAsync()
+        public async Task<IQueryable<Survey>> QueryAsync()
         {
-            return Client.GetAsync(SurveysApi.AbsoluteUri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<List<Survey>>(stringTask.Result).AsQueryable())
-                         .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(SurveysApi.AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var surveysList =
+                await JsonConvert.DeserializeObjectAsync<List<Survey>>(responseAsString).FlattenExceptions();
+            return surveysList.AsQueryable();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.AddAsync"/>
         /// </summary>
-        public Task<Survey> AddAsync(Survey survey)
+        public async Task<Survey> AddAsync(Survey survey)
         {
             if (survey == null)
             {
                 throw new ArgumentNullException("survey");
             }
 
-            return Client.PostAsJsonAsync(SurveysApi.AbsoluteUri, survey)
-                         .ContinueWith(task => task.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(task => JsonConvert.DeserializeObjectAsync<Survey>(task.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage = await Client.PostAsJsonAsync(SurveysApi.AbsoluteUri, survey);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<Survey>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.RemoveAsync"/>
         /// </summary>
-        public Task RemoveAsync(Survey survey)
+        public async Task RemoveAsync(Survey survey)
         {
             if (survey == null)
             {
                 throw new ArgumentNullException("survey");
             }
 
-            return
-                Client.DeleteAsync(SurveysApi.AbsoluteUri + survey.SurveyId)
-                      .FlattenExceptions();
+            await Client.DeleteAsync(SurveysApi.AbsoluteUri + survey.SurveyId).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.UpdateAsync"/>
         /// </summary>
-        public Task<Survey> UpdateAsync(Survey survey)
+        public async Task<Survey> UpdateAsync(Survey survey)
         {
             if (survey == null)
             {
@@ -97,18 +92,15 @@ namespace Nfield.Services.Implementation
                 InterviewerInstruction = survey.InterviewerInstruction
             };
 
-            return Client.PatchAsJsonAsync(SurveysApi + survey.SurveyId, updatedSurvey)
-             .ContinueWith(
-                 responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-             .ContinueWith(
-                 stringTask => JsonConvert.DeserializeObjectAsync<Survey>(stringTask.Result).Result)
-             .FlattenExceptions();
+            var resposneMesage = await Client.PatchAsJsonAsync(SurveysApi + survey.SurveyId, updatedSurvey);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<Survey>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// <see cref="INfieldSurveysService.UploadInterviewerFileInstructionsAsync(string,string)"/>
         /// </summary>
-        public Task UploadInterviewerFileInstructionsAsync(string filePath, string surveyId)
+        public async Task UploadInterviewerFileInstructionsAsync(string filePath, string surveyId)
         {
             var fileName = Path.GetFileName(filePath);
 
@@ -120,75 +112,66 @@ namespace Nfield.Services.Implementation
             var byteArrayContent = new ByteArrayContent(File.ReadAllBytes(filePath));
             byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-            return Client.PostAsync(uri, byteArrayContent).FlattenExceptions();
+            await Client.PostAsync(uri, byteArrayContent).FlattenExceptions();
         }
 
         /// <summary>
         /// <see cref="INfieldSurveysService.UploadInterviewerFileInstructionsAsync(byte[], string ,string)"/>
         /// </summary>
-        public Task UploadInterviewerFileInstructionsAsync(byte[] fileContent, string fileName, string surveyId)
+        public async Task UploadInterviewerFileInstructionsAsync(byte[] fileContent, string fileName, string surveyId)
         {
             var uri = GetInterviewerInstructionUri(surveyId, fileName);
             
             var byteArrayContent = new ByteArrayContent(fileContent);
             byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-            return Client.PostAsync(uri, byteArrayContent).FlattenExceptions();
+            await Client.PostAsync(uri, byteArrayContent).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.QuotaQueryAsync"/>
         /// </summary>
         /// <returns></returns>
-        public Task<QuotaLevel> QuotaQueryAsync(string surveyId)
+        public async Task<QuotaLevel> QuotaQueryAsync(string surveyId)
         {
-            string uri = string.Format(@"{0}{1}/{2}", SurveysApi.AbsoluteUri, surveyId, QuotaControllerName);
+            var uri = string.Format(@"{0}{1}/{2}", SurveysApi.AbsoluteUri, surveyId, QuotaControllerName);
 
-            return Client.GetAsync(uri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<QuotaLevel>(stringTask.Result))
-                         .FlattenExceptions();    
+            var resposneMesage = await Client.GetAsync(uri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<QuotaLevel>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointsQueryAsync"/>
         /// </summary>
-        public Task<IQueryable<SamplingPoint>> SamplingPointsQueryAsync(string surveyId)
+        public async Task<IQueryable<SamplingPoint>> SamplingPointsQueryAsync(string surveyId)
         {
-            string uri = string.Format(@"{0}{1}/{2}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName);
-            
-            return Client.GetAsync(uri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<List<SamplingPoint>>(stringTask.Result).AsQueryable())
-                         .FlattenExceptions();
+            var uri = string.Format(@"{0}{1}/{2}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName);
+
+            var resposneMesage = await Client.GetAsync(uri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var samplingPointsList =
+                await JsonConvert.DeserializeObjectAsync<List<SamplingPoint>>(responseAsString).FlattenExceptions();
+            return samplingPointsList.AsQueryable();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointQueryAsync"/>
         /// </summary>
-        public Task<SamplingPoint> SamplingPointQueryAsync(string surveyId, string samplingPointId)
+        public async Task<SamplingPoint> SamplingPointQueryAsync(string surveyId, string samplingPointId)
         {
-            string uri = string.Format(@"{0}{1}/{2}/{3}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName, samplingPointId);
-            
-            return Client.GetAsync(uri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<SamplingPoint>(stringTask.Result))
-                         .FlattenExceptions();            
+            var uri = string.Format(@"{0}{1}/{2}/{3}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName,
+                samplingPointId);
+
+            var resposneMesage = await Client.GetAsync(uri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<SamplingPoint>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointUpdateAsync"/>
         /// </summary>
-        public Task<SamplingPoint> SamplingPointUpdateAsync(string surveyId, SamplingPoint samplingPoint)
+        public async Task<SamplingPoint> SamplingPointUpdateAsync(string surveyId, SamplingPoint samplingPoint)
         {
             if (samplingPoint == null)
             {
@@ -203,80 +186,74 @@ namespace Nfield.Services.Implementation
                 GroupId = samplingPoint.GroupId
             };
 
-            string uri = string.Format(@"{0}{1}/{2}/{3}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName, samplingPoint.SamplingPointId);
+            var uri = string.Format(@"{0}{1}/{2}/{3}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName,
+                samplingPoint.SamplingPointId);
 
-            return Client.PatchAsJsonAsync(uri, updatedSamplingPoint)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask => JsonConvert.DeserializeObjectAsync<SamplingPoint>(stringTask.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage = await Client.PatchAsJsonAsync(uri, updatedSamplingPoint);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<SamplingPoint>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointAddAsync"/>
         /// </summary>
-        public Task<SamplingPoint> SamplingPointAddAsync(string surveyId, SamplingPoint samplingPoint)
+        public async Task<SamplingPoint> SamplingPointAddAsync(string surveyId, SamplingPoint samplingPoint)
         {
-            string uri = string.Format(@"{0}{1}/{2}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName);
-            return Client.PostAsJsonAsync(uri, samplingPoint)
-                         .ContinueWith(task => task.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(task => JsonConvert.DeserializeObjectAsync<SamplingPoint>(task.Result).Result)
-                         .FlattenExceptions();            
+            var uri = string.Format(@"{0}{1}/{2}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName);
+
+            var resposneMesage = await Client.PostAsJsonAsync(uri, samplingPoint);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<SamplingPoint>(responseAsString).FlattenExceptions(); 
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointDeleteAsync"/>
         /// </summary>
-        public Task SamplingPointDeleteAsync(string surveyId, SamplingPoint samplingPoint)
+        public async Task SamplingPointDeleteAsync(string surveyId, SamplingPoint samplingPoint)
         {
             if (samplingPoint == null)
             {
                 throw new ArgumentNullException("samplingPoint");
             }
-            string uri = string.Format(@"{0}{1}/{2}/{3}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName, samplingPoint.SamplingPointId);
-            return Client.DeleteAsync(uri)
-                        .FlattenExceptions();
+            var uri = string.Format(@"{0}{1}/{2}/{3}", SurveysApi.AbsoluteUri, surveyId, SamplingPointsControllerName,
+                samplingPoint.SamplingPointId);
+            await Client.DeleteAsync(uri).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointQuotaTargetsQueryAsync"/>
         /// </summary>
-        public Task<IQueryable<SamplingPointQuotaTarget>> SamplingPointQuotaTargetsQueryAsync(string surveyId, string samplingPointId)
+        public async Task<IQueryable<SamplingPointQuotaTarget>> SamplingPointQuotaTargetsQueryAsync(string surveyId, string samplingPointId)
         {
-            string uri = string.Format(@"{0}{1}/{2}/{3}/{4}", SurveysApi.AbsoluteUri, surveyId,
+            var uri = string.Format(@"{0}{1}/{2}/{3}/{4}", SurveysApi.AbsoluteUri, surveyId,
                 SamplingPointsControllerName, samplingPointId, SamplingPointsQuotaControllerName);
 
-            return Client.GetAsync(uri)
-             .ContinueWith(
-                 responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-             .ContinueWith(
-                 stringTask =>
-                 JsonConvert.DeserializeObject<List<SamplingPointQuotaTarget>>(stringTask.Result).AsQueryable())
-             .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(uri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var samplingPointQuotaTargetsList =
+                await JsonConvert.DeserializeObjectAsync<List<SamplingPointQuotaTarget>>(responseAsString).FlattenExceptions();
+            return samplingPointQuotaTargetsList.AsQueryable();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointQuotaTargetQueryAsync"/>
         /// </summary>
-        public Task<SamplingPointQuotaTarget> SamplingPointQuotaTargetQueryAsync(string surveyId, string samplingPointId, string levelId)
+        public async Task<SamplingPointQuotaTarget> SamplingPointQuotaTargetQueryAsync(string surveyId,
+            string samplingPointId, string levelId)
         {
-            string uri = string.Format(@"{0}{1}/{2}/{3}/{4}/{5}", SurveysApi.AbsoluteUri, surveyId,
+            var uri = string.Format(@"{0}{1}/{2}/{3}/{4}/{5}", SurveysApi.AbsoluteUri, surveyId,
                 SamplingPointsControllerName, samplingPointId, SamplingPointsQuotaControllerName, levelId);
 
-            return Client.GetAsync(uri)
-             .ContinueWith(
-                 responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-             .ContinueWith(
-                 stringTask =>
-                 JsonConvert.DeserializeObject<SamplingPointQuotaTarget>(stringTask.Result))
-             .FlattenExceptions();  
+            var resposneMesage = await Client.GetAsync(uri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return
+                await JsonConvert.DeserializeObjectAsync<SamplingPointQuotaTarget>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveysService.SamplingPointQuotaTargetUpdateAsync"/>
         /// </summary>
-        public Task<SamplingPointQuotaTarget> SamplingPointQuotaTargetUpdateAsync(string surveyId, string samplingPointId, SamplingPointQuotaTarget samplingPointQuotaTarget)
+        public async Task<SamplingPointQuotaTarget> SamplingPointQuotaTargetUpdateAsync(string surveyId, string samplingPointId, SamplingPointQuotaTarget samplingPointQuotaTarget)
         {
             if (samplingPointQuotaTarget == null)
             {
@@ -288,16 +265,14 @@ namespace Nfield.Services.Implementation
                 Target = samplingPointQuotaTarget.Target
             };
 
-            string uri = string.Format(@"{0}{1}/{2}/{3}/{4}/{5}", SurveysApi.AbsoluteUri, surveyId,
+            var uri = string.Format(@"{0}{1}/{2}/{3}/{4}/{5}", SurveysApi.AbsoluteUri, surveyId,
                 SamplingPointsControllerName, samplingPointId, SamplingPointsQuotaControllerName,
                 samplingPointQuotaTarget.LevelId);
 
-            return Client.PatchAsJsonAsync(uri, updatedSamplingPointQuotaTarget)
-             .ContinueWith(
-                 responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-             .ContinueWith(
-                 stringTask => JsonConvert.DeserializeObjectAsync<SamplingPointQuotaTarget>(stringTask.Result).Result)
-             .FlattenExceptions();
+            var resposneMesage = await Client.PatchAsJsonAsync(uri, updatedSamplingPointQuotaTarget);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return
+                await JsonConvert.DeserializeObjectAsync<SamplingPointQuotaTarget>(responseAsString).FlattenExceptions();
         }
 
         #endregion

@@ -31,22 +31,21 @@ namespace Nfield.Services.Implementation
 
         #region INfieldMediaFilesService Members
 
-        public Task<IQueryable<string>> QueryAsync(string surveyId)
+        public async Task<IQueryable<string>> QueryAsync(string surveyId)
         {
             if (string.IsNullOrEmpty(surveyId))
             {
                 throw new ArgumentNullException("surveyId");
             }
-            return Client.GetAsync(MediaFilesApi(surveyId, null).AbsoluteUri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<List<string>>(stringTask.Result).AsQueryable())
-                         .FlattenExceptions();
+
+            var resposneMesage = await Client.GetAsync(MediaFilesApi(surveyId, null).AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var mediaFilesList =
+                await JsonConvert.DeserializeObjectAsync<List<string>>(responseAsString).FlattenExceptions();
+            return mediaFilesList.AsQueryable();
         }
 
-        public Task RemoveAsync(string surveyId, string fileName)
+        public async Task RemoveAsync(string surveyId, string fileName)
         {
             if (string.IsNullOrEmpty(surveyId))
             {
@@ -56,12 +55,11 @@ namespace Nfield.Services.Implementation
             {
                 throw new ArgumentNullException("fileName");
             }
-            return
-                Client.DeleteAsync(MediaFilesApi(surveyId, fileName).AbsoluteUri)
-                      .FlattenExceptions();
+
+            await Client.DeleteAsync(MediaFilesApi(surveyId, fileName).AbsoluteUri).FlattenExceptions();
         }
 
-        public Task AddOrUpdateAsync(string surveyId, string fileName, byte[] content)
+        public async Task AddOrUpdateAsync(string surveyId, string fileName, byte[] content)
         {
             if (string.IsNullOrEmpty(surveyId))
             {
@@ -75,12 +73,11 @@ namespace Nfield.Services.Implementation
             {
                 throw new ArgumentNullException("content");
             }
+
             var postContent = new ByteArrayContent(content);
             postContent.Headers.ContentType =
                 new MediaTypeHeaderValue("application/octet-stream");
-            return
-                Client.PutAsync(MediaFilesApi(surveyId, fileName).AbsoluteUri, postContent)
-                      .FlattenExceptions();
+            await Client.PutAsync(MediaFilesApi(surveyId, fileName).AbsoluteUri, postContent).FlattenExceptions();
         }
 
         #endregion

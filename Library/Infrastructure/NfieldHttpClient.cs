@@ -93,21 +93,18 @@ namespace Nfield.Infrastructure
 
         #endregion
 
-        private Task<HttpResponseMessage> SendRequestAndHandleAuthenticationToken(Task<HttpResponseMessage> sendTask)
+        private async Task<HttpResponseMessage> SendRequestAndHandleAuthenticationToken(Task<HttpResponseMessage> sendTask)
         {
-            return sendTask.ContinueWith(responseTask =>
+            var response = await sendTask;
+
+            IEnumerable<string> headerValues;
+            if (response.Headers.TryGetValues("X-AuthenticationToken", out headerValues))
             {
-                var response = responseTask.Result;
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Basic", headerValues.First());
+            }
 
-                IEnumerable<string> headerValues;
-                if(response.Headers.TryGetValues("X-AuthenticationToken", out headerValues))
-                {
-                    _httpClient.DefaultRequestHeaders.Authorization = 
-                        new AuthenticationHeaderValue("Basic", headerValues.First());
-                }
-
-                return response.ValidateResponse();
-            });
+            return response.ValidateResponse();
         }
 
     }

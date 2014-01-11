@@ -34,15 +34,13 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldFieldworkOfficesService.QueryAsync"/>
         /// </summary>
-        public Task<IQueryable<FieldworkOffice>> QueryAsync()
+        public async Task<IQueryable<FieldworkOffice>> QueryAsync()
         {
-            return ConnectionClient.Client.GetAsync(OfficesApi.AbsoluteUri)
-             .ContinueWith(
-                 responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-             .ContinueWith(
-                 stringTask =>
-                 JsonConvert.DeserializeObject<List<FieldworkOffice>>(stringTask.Result).AsQueryable())
-             .FlattenExceptions();
+            var resposneMesage = await ConnectionClient.Client.GetAsync(OfficesApi.AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var fieldWorkOfficesList =
+                await JsonConvert.DeserializeObjectAsync<List<FieldworkOffice>>(responseAsString).FlattenExceptions();
+            return fieldWorkOfficesList.AsQueryable();
         }
 
         #endregion

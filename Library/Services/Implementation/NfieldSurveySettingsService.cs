@@ -35,23 +35,21 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldSurveySettingsService.QueryAsync"/>
         /// </summary>
-        public Task<IQueryable<SurveySetting>> QueryAsync(string surveyId)
+        public async Task<IQueryable<SurveySetting>> QueryAsync(string surveyId)
         {
             CheckSurveyId(surveyId);
 
-            return Client.GetAsync(SettingsApi(surveyId, null).AbsoluteUri)
-                         .ContinueWith(
-                             responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(
-                             stringTask =>
-                             JsonConvert.DeserializeObject<List<SurveySetting>>(stringTask.Result).AsQueryable())
-                         .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(SettingsApi(surveyId, null).AbsoluteUri);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            var surveySettingsList =
+                await JsonConvert.DeserializeObjectAsync<List<SurveySetting>>(responseAsString).FlattenExceptions();
+            return surveySettingsList.AsQueryable();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveySettingsService.AddOrUpdateAsync"/>
         /// </summary>
-        public Task<SurveySetting> AddOrUpdateAsync(string surveyId, SurveySetting setting)
+        public async Task<SurveySetting> AddOrUpdateAsync(string surveyId, SurveySetting setting)
         {
             CheckSurveyId(surveyId);
 
@@ -60,10 +58,9 @@ namespace Nfield.Services.Implementation
                 throw new ArgumentNullException("setting");
             }
 
-            return Client.PostAsJsonAsync(SettingsApi(surveyId, null).AbsoluteUri, setting)
-                         .ContinueWith(task => task.Result.Content.ReadAsStringAsync().Result)
-                         .ContinueWith(task => JsonConvert.DeserializeObjectAsync<SurveySetting>(task.Result).Result)
-                         .FlattenExceptions();
+            var resposneMesage = await Client.PostAsJsonAsync(SettingsApi(surveyId, null).AbsoluteUri, setting);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<SurveySetting>(responseAsString).FlattenExceptions();
         }
 
         #endregion

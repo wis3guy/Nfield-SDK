@@ -40,15 +40,11 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldSurveyScriptService.GetAsync"/>
         /// </summary>
-        public Task<SurveyScript> GetAsync(string surveyId)
+        public async Task<SurveyScript> GetAsync(string surveyId)
         {
-            return Client.GetAsync(SurveyScriptApi.AbsoluteUri + surveyId)
-                .ContinueWith(
-                    responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                .ContinueWith(
-                    stringTask =>
-                        JsonConvert.DeserializeObject<SurveyScript>(stringTask.Result))
-                .FlattenExceptions();
+            var resposneMesage = await Client.GetAsync(SurveyScriptApi.AbsoluteUri + surveyId);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<SurveyScript>(responseAsString).FlattenExceptions();
         }
 
         #endregion
@@ -77,25 +73,22 @@ namespace Nfield.Services.Implementation
         /// <summary>
         /// See <see cref="INfieldSurveyScriptService.PostAsync(string,Nfield.Models.SurveyScript)"/>
         /// </summary>
-        public Task<SurveyScript> PostAsync(string surveyId, SurveyScript surveyScript)
+        public async Task<SurveyScript> PostAsync(string surveyId, SurveyScript surveyScript)
         {
             if (surveyScript == null)
             {
                 throw new ArgumentNullException("surveyScript");
             }
-            return Client.PostAsJsonAsync(SurveyScriptApi.AbsoluteUri + surveyId, surveyScript)
-                .ContinueWith(
-                    responseMessageTask => responseMessageTask.Result.Content.ReadAsStringAsync().Result)
-                .ContinueWith(
-                    stringTask =>
-                        JsonConvert.DeserializeObject<SurveyScript>(stringTask.Result))
-                .FlattenExceptions();
+
+            var resposneMesage = await Client.PostAsJsonAsync(SurveyScriptApi.AbsoluteUri + surveyId, surveyScript);
+            var responseAsString = await resposneMesage.Content.ReadAsStringAsync();
+            return await JsonConvert.DeserializeObjectAsync<SurveyScript>(responseAsString).FlattenExceptions();
         }
 
         /// <summary>
         /// See <see cref="INfieldSurveyScriptService.PostAsync(string,string)"/>
         /// </summary>
-        public Task<SurveyScript> PostAsync(string surveyId, string filePath)
+        public async Task<SurveyScript> PostAsync(string surveyId, string filePath)
         {
 
             var fileName = _fileSystem.Path.GetFileName(filePath);
@@ -109,7 +102,7 @@ namespace Nfield.Services.Implementation
                 Script = _fileSystem.File.ReadAllText(filePath)
             };
 
-            return PostAsync(surveyId, surveyScript);
+            return await PostAsync(surveyId, surveyScript);
         }
     }
 }

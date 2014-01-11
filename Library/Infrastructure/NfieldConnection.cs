@@ -61,7 +61,7 @@ namespace Nfield.Infrastructure
         /// Sign into the specified domain, using the specified username and password
         /// </summary>
         /// <returns><c>true</c> if sign-in was successful, <c>false</c> otherwise.</returns>
-        public Task<bool> SignInAsync(string domainName, string username, string password)
+        public async Task<bool> SignInAsync(string domainName, string username, string password)
         {
             if (Client == null)
             {
@@ -75,10 +75,8 @@ namespace Nfield.Infrastructure
                 };
             var content = new FormUrlEncodedContent(data);
 
-            return
-                Client.PostAsync(NfieldServerUri + "SignIn", content)
-                      .ContinueWith(responseMessageTask => responseMessageTask.Result.StatusCode == HttpStatusCode.OK)
-                      .FlattenExceptions();
+            var resposneMesage = await Client.PostAsync(NfieldServerUri + "SignIn", content).FlattenExceptions();
+            return resposneMesage.StatusCode == HttpStatusCode.OK;
         }
 
         /// <summary>
