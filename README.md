@@ -27,7 +27,7 @@ In this example we're using
 <p>Sign in using your Nfield credentials.</p>
 <pre>    connection.SignInAsync("testdomain", "user1", "password123").Wait();</pre>
 <p>Get a service.</p>
-<pre>    INfieldInterviewersService interviewersService = connection.GetService<INfieldInterviewersService>();</pre>
+<pre>    INfieldInterviewersService interviewersService = connection.GetService&lt;INfieldInterviewersService&gt;();</pre>
 <p>Then you can perform any operations that you want to perform on the service, for example add an interviewer.</p>
 <pre>    Interviewer interviewer = new Interviewer
             {
